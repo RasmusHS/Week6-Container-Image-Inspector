@@ -10,9 +10,9 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "${workspaceFolder}",
+            "program": "${workspaceFolder}/cmd/inspector",
             "env": {},
-            "args": [],
+            "args": ["library/alpine", "latest"],
             "showLog": true,
             "console": "integratedTerminal"
         }
