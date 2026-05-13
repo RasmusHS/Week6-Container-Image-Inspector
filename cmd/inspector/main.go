@@ -1,7 +1,10 @@
 package main
 
 import (
+	"container-inspector/internal/image"
+	"container-inspector/internal/output"
 	"container-inspector/internal/registry"
+
 	"fmt"
 	"os"
 	"strconv"
@@ -18,7 +21,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	image := os.Args[1]
+	imageName := os.Args[1]
 	tag := os.Args[2]
 
 	// Check for optional --inspect-layer flag
@@ -32,20 +35,20 @@ func main() {
 		inspectLayer = n
 	}
 
-	fmt.Printf("Image: %s, Tag: %s\n", image, tag)
+	fmt.Printf("Image: %s, Tag: %s\n", imageName, tag)
 
 	// Call the registry package to get the client
 	client := registry.NewClient("https://registry-1.docker.io")
 
 	// Get the auth token for the image and tag
-	token, err := client.GetAuthToken(image, tag)
+	token, err := client.GetAuthToken(imageName, tag)
 	if err != nil {
 		fmt.Printf("Error getting auth token: %v\n", err)
 		os.Exit(1)
 	}
 
 	// Fetch the image manifest
-	manifest, err := client.FetchManifest(image, tag, token)
+	manifest, err := client.FetchManifest(imageName, tag, token)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Manifest error: %v\n", err)
 		os.Exit(1)
@@ -55,11 +58,15 @@ func main() {
 	fmt.Printf("Config digest: %s\n", manifest.Config.Digest)
 
 	// Fetch the image config (contains Dockerfile history)
-	config, err := client.FetchImageConfig(image, token, manifest.Config.Digest)
+	config, err := client.FetchImageConfig(imageName, token, manifest.Config.Digest)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Config error: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Build and display the summary
+	summary := image.BuildSummary(imageName, tag, manifest, config)
+	output.PrintSummary(summary)
 
 	// Debug print the auth token, manifest, config, and layer inspection for verification
 	fmt.Printf("Auth Token: %s\n", token)
