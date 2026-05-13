@@ -4,6 +4,7 @@ import (
 	"container-inspector/internal/registry"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -19,6 +20,17 @@ func main() {
 
 	image := os.Args[1]
 	tag := os.Args[2]
+
+	// Check for optional --inspect-layer flag
+	inspectLayer := -1
+	if len(os.Args) == 5 && os.Args[3] == "--inspect-layer" {
+		n, err := strconv.Atoi(os.Args[4])
+		if err != nil || n < 1 {
+			fmt.Println("Error: --inspect-layer must be a positive number")
+			os.Exit(1)
+		}
+		inspectLayer = n
+	}
 
 	fmt.Printf("Image: %s, Tag: %s\n", image, tag)
 
@@ -49,9 +61,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Debug print the auth token, manifest and config for verification
+	// Debug print the auth token, manifest, config, and layer inspection for verification
 	fmt.Printf("Auth Token: %s\n", token)
 	fmt.Printf("Manifest: %+v\n", manifest)
 	fmt.Printf("Image Config: %+v\n", config)
-
+	fmt.Printf("Inspecting layer %d...\n", inspectLayer)
 }
