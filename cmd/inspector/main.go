@@ -35,10 +35,10 @@ func main() {
 		inspectLayer = n
 	}
 
-	fmt.Printf("Image: %s, Tag: %s\n", imageName, tag)
-
-	// Call the registry package to get the client
+	// Create registry client and authenticate
 	client := registry.NewClient("https://registry-1.docker.io")
+
+	fmt.Printf("Fetching manifest for %s:%s...\n\n", imageName, tag)
 
 	// Get the auth token for the image and tag
 	token, err := client.GetAuthToken(imageName, tag)
@@ -54,9 +54,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Debug print the config digest from the manifest for verification
-	fmt.Printf("Config digest: %s\n", manifest.Config.Digest)
-
 	// Fetch the image config (contains Dockerfile history)
 	config, err := client.FetchImageConfig(imageName, token, manifest.Config.Digest)
 	if err != nil {
@@ -68,9 +65,25 @@ func main() {
 	summary := image.BuildSummary(imageName, tag, manifest, config)
 	output.PrintSummary(summary)
 
-	// Debug print the auth token, manifest, config, and layer inspection for verification
-	fmt.Printf("Auth Token: %s\n", token)
-	fmt.Printf("Manifest: %+v\n", manifest)
-	fmt.Printf("Image Config: %+v\n", config)
-	fmt.Printf("Inspecting layer %d...\n", inspectLayer)
+	// Optional: inspect a specific layer's contents
+	if inspectLayer > 0 {
+		// Find the layer by index
+		for _, layer := range summary.Layers {
+			if layer.Index == inspectLayer {
+				fmt.Printf("Downloading and inspecting layer %d...\n", inspectLayer)
+				entries, err := image.InspectLayer(
+					"https://registry-1.docker.io",
+					imageName,
+					token,
+					layer.Digest,
+				)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Layer inspect error: %v\n", err)
+					os.Exit(1)
+				}
+				output.PrintLayerContents(inspectLayer, layer.Digest, entries)
+				break
+			}
+		}
+	}
 }

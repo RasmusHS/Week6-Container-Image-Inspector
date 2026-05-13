@@ -45,8 +45,6 @@ func (rc *RegistryClient) GetAuthToken(image, tag string) (string, error) {
 
 	// Get the WWW-Authenticate header from the response to extract the realm, service, and scope for the token request
 	wwwAuth := resp.Header.Get("WWW-Authenticate")
-	println("Status Code:", resp.StatusCode)     // Print the status code for debugging purposes
-	println("WWW-Authenticate Header:", wwwAuth) // Print the WWW-Authenticate header for debugging purposes
 
 	// Parse the WWW-Authenticate header to extract the realm, service, and scope
 	realm, service, scope, err := parseWWWAuthenticate(wwwAuth)
